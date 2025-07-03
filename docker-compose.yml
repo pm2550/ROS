@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  ros2-galactic:
+    build:
+      context: .
+      dockerfile: Dockerfile.ros2
+    image: ros2-galactic:latest
+    container_name: ros2-galactic-container
+    
+    # 网络设置
+    network_mode: "host"
+    
+    # 环境变量
+    environment:
+      - DISPLAY=${DISPLAY}
+      - ROS_DOMAIN_ID=42
+      - QT_X11_NO_MITSHM=1
+    
+    # 卷挂载
+    volumes:
+      # 挂载当前目录到容器的工作空间
+      - .:/ros2_ws/src/workspace:rw
+      # X11转发用于GUI应用
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /dev:/dev:rw
+      # 共享网络配置
+      - /etc/hosts:/etc/hosts:ro
+    
+    # 设备权限
+    privileged: true
+    
+    # 保持容器运行
+    tty: true
+    stdin_open: true
+    
+    # 工作目录
+    working_dir: /ros2_ws
+    
+    # 重启策略
+    restart: unless-stopped
+
+  # 可选：ROS 2管理和监控工具
+  ros2-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.ros2
+    image: ros2-galactic:latest
+    container_name: ros2-tools-container
+    
+    network_mode: "host"
+    
+    environment:
+      - DISPLAY=${DISPLAY}
+      - ROS_DOMAIN_ID=42
+      - QT_X11_NO_MITSHM=1
+    
+    volumes:
+      - .:/ros2_ws/src/workspace:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    
+    # 运行rqt作为默认工具
+    command: ["rqt"]
+    
+    depends_on:
+      - ros2-galactic
+    
+    profiles:
+      - tools 

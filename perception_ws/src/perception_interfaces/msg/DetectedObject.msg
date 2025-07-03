@@ -1,0 +1,9 @@
+# 检测到的单个对象
+int32 class_id
+string class_name
+float32 confidence
+geometry_msgs/Point center
+geometry_msgs/Point min_bound
+geometry_msgs/Point max_bound
+float32 depth
+int32 pixel_area 

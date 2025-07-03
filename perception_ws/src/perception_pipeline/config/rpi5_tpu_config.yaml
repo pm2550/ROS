@@ -1,0 +1,58 @@
+# RPI5 + TPU 配置文件
+# 针对深度学习优化的参数设置
+
+sensor_input_node:
+  ros__parameters:
+    use_real_camera: true
+    camera_device_left: 0
+    camera_device_right: 1
+    image_width: 1920
+    image_height: 1080
+    fps: 30.0
+    simulation_mode: false
+
+image_preprocessor_node:
+  ros__parameters:
+    target_width: 640
+    target_height: 480
+    enable_denoising: true
+    enable_enhancement: true
+    gaussian_blur_kernel: 3
+    clahe_clip_limit: 2.0
+
+depth_estimator_node:
+  ros__parameters:
+    estimation_method: "stereo_cnn"
+    stereo_algorithm: "SGBM"
+    min_disparity: 0
+    num_disparities: 64
+    block_size: 11
+    enable_tpu: true
+    model_path: "/models/depth_model.pth"
+
+object_detector_node:
+  ros__parameters:
+    detection_method: "dnn"
+    dnn_model: "yolov4"
+    confidence_threshold: 0.5
+    nms_threshold: 0.4
+    use_tpu: true
+    model_path: "/models/"
+
+semantic_segmentor_node:
+  ros__parameters:
+    segmentation_method: "dnn"
+    dnn_model: "fast_scnn"
+    use_tpu: true
+    model_path: "/models/"
+
+perception_manager_node:
+  ros__parameters:
+    pipeline_mode: "dnn_tpu"
+    sync_timeout: 0.1
+
+timing_analyzer_node:
+  ros__parameters:
+    analysis_window: 100
+    report_interval: 10.0
+    target_fps: 30.0 

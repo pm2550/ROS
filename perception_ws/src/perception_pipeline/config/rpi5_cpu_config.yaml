@@ -1,0 +1,52 @@
+# RPI5 CPU-only 配置文件
+# 针对经典计算机视觉方法优化的参数设置
+
+sensor_input_node:
+  ros__parameters:
+    use_real_camera: true
+    camera_device_left: 0
+    camera_device_right: 1
+    image_width: 1920
+    image_height: 1080
+    fps: 15.0  # 降低FPS以减少CPU负载
+    simulation_mode: false
+
+image_preprocessor_node:
+  ros__parameters:
+    target_width: 320  # 降低分辨率以提高性能
+    target_height: 240
+    enable_denoising: false  # 关闭去噪以节省CPU
+    enable_enhancement: true
+    gaussian_blur_kernel: 3
+    clahe_clip_limit: 2.0
+
+depth_estimator_node:
+  ros__parameters:
+    estimation_method: "stereo_cv"
+    stereo_algorithm: "BM"  # BM比SGBM更快
+    min_disparity: 0
+    num_disparities: 32  # 减少视差数量
+    block_size: 9  # 减小块大小
+    enable_tpu: false
+
+object_detector_node:
+  ros__parameters:
+    detection_method: "cv"
+    confidence_threshold: 0.7  # 提高阈值减少误检
+    use_tpu: false
+
+semantic_segmentor_node:
+  ros__parameters:
+    segmentation_method: "cv"
+    use_tpu: false
+
+perception_manager_node:
+  ros__parameters:
+    pipeline_mode: "cv_cpu"
+    sync_timeout: 0.2  # 增加同步超时
+
+timing_analyzer_node:
+  ros__parameters:
+    analysis_window: 50
+    report_interval: 15.0
+    target_fps: 15.0 

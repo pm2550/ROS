@@ -1,0 +1,78 @@
+# 使用Ubuntu 20.04作为基础镜像（ROS 2 Galactic的官方支持版本）
+FROM ubuntu:20.04
+
+# 避免在安装过程中出现交互式提示
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+
+# 设置语言环境
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+# 更新软件包列表并安装基础工具
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg2 \
+    lsb-release \
+    software-properties-common \
+    wget \
+    git \
+    vim \
+    nano \
+    python3-pip \
+    python3-setuptools \
+    build-essential \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# 添加ROS 2 GPG密钥
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+# 添加ROS 2存储库
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# 更新软件包列表并安装ROS 2 Galactic
+RUN apt-get update && apt-get install -y \
+    ros-galactic-desktop \
+    python3-rosdep \
+    python3-colcon-common-extensions \
+    python3-argcomplete \
+    && rm -rf /var/lib/apt/lists/*
+
+# 初始化rosdep
+RUN rosdep init && rosdep update
+
+# 设置ROS 2环境变量
+RUN echo "source /opt/ros/galactic/setup.bash" >> ~/.bashrc
+RUN echo "export ROS_DOMAIN_ID=42" >> ~/.bashrc
+
+# 创建工作空间
+RUN mkdir -p /ros2_ws/src
+WORKDIR /ros2_ws
+
+# 设置colcon自动补全
+RUN echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> ~/.bashrc
+
+# 安装常用的ROS 2工具包
+RUN apt-get update && apt-get install -y \
+    ros-galactic-demo-nodes-cpp \
+    ros-galactic-demo-nodes-py \
+    ros-galactic-example-interfaces \
+    ros-galactic-rqt \
+    ros-galactic-rqt-common-plugins \
+    ros-galactic-rviz2 \
+    ros-galactic-nav2-bringup \
+    ros-galactic-gazebo-ros-pkgs \
+    && rm -rf /var/lib/apt/lists/*
+
+# 创建启动脚本
+RUN echo '#!/bin/bash\n\
+source /opt/ros/galactic/setup.bash\n\
+if [ -f "/ros2_ws/install/setup.bash" ]; then\n\
+    source /ros2_ws/install/setup.bash\n\
+fi\n\
+exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+# 设置入口点
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/bin/bash"] 
