@@ -1,69 +1,29 @@
-version: '3.8'
-
+version: "3.8"
 services:
-  ros2-galactic:
+  ros2-galactic-max:
     build:
       context: .
-      dockerfile: Dockerfile.ros2
-    image: ros2-galactic:latest
-    container_name: ros2-galactic-container
-    
-    # 网络设置
-    network_mode: "host"
-    
-    # 环境变量
-    environment:
-      - DISPLAY=${DISPLAY}
-      - ROS_DOMAIN_ID=42
-      - QT_X11_NO_MITSHM=1
-    
-    # 卷挂载
+      dockerfile: Dockerfile.ros2         # 改成你的文件名
+    image: ros2-galactic-max:latest       # ★记得跟 run 时保持一致
+    container_name: ros2-galactic-max
+    network_mode: host
+
+    devices:
+      - /dev/apex_0
+      - /dev/apex_1              # 只插一块 TPU 就留一个
+    group_add:
+      - plugdev                  # 让非 root 用户也能访问 TPU
+
     volumes:
-      # 挂载当前目录到容器的工作空间
       - .:/ros2_ws/src/workspace:rw
-      # X11转发用于GUI应用
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - /dev:/dev:rw
-      # 共享网络配置
-      - /etc/hosts:/etc/hosts:ro
-    
-    # 设备权限
-    privileged: true
-    
-    # 保持容器运行
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw  # 如需 GUI
+      # 挂载宿主机MAX版本EdgeTPU库文件
+      - /lib/aarch64-linux-gnu/libedgetpu.so.1:/lib/aarch64-linux-gnu/libedgetpu.so.1:ro
+      - /lib/aarch64-linux-gnu/libedgetpu.so:/lib/aarch64-linux-gnu/libedgetpu.so:ro
+
+    privileged: false            # 只挂 /dev/apex_* 已够；不想给全设备可设 true
     tty: true
     stdin_open: true
-    
-    # 工作目录
-    working_dir: /ros2_ws
-    
-    # 重启策略
-    restart: unless-stopped
-
-  # 可选：ROS 2管理和监控工具
-  ros2-tools:
-    build:
-      context: .
-      dockerfile: Dockerfile.ros2
-    image: ros2-galactic:latest
-    container_name: ros2-tools-container
-    
-    network_mode: "host"
-    
     environment:
       - DISPLAY=${DISPLAY}
       - ROS_DOMAIN_ID=42
-      - QT_X11_NO_MITSHM=1
-    
-    volumes:
-      - .:/ros2_ws/src/workspace:rw
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    
-    # 运行rqt作为默认工具
-    command: ["rqt"]
-    
-    depends_on:
-      - ros2-galactic
-    
-    profiles:
-      - tools 

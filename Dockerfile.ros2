@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y \
     python3-setuptools \
     build-essential \
     cmake \
+    usbutils \
+    pciutils \
     && rm -rf /var/lib/apt/lists/*
 
 # 添加ROS 2 GPG密钥
@@ -65,14 +67,10 @@ RUN apt-get update && apt-get install -y \
     ros-galactic-gazebo-ros-pkgs \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建启动脚本
-RUN echo '#!/bin/bash\n\
-source /opt/ros/galactic/setup.bash\n\
-if [ -f "/ros2_ws/install/setup.bash" ]; then\n\
-    source /ros2_ws/install/setup.bash\n\
-fi\n\
-exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+# 安装PyCoral和TensorFlow Lite（EdgeTPU库通过volume挂载）
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 install --extra-index-url https://google-coral.github.io/py-repo/ tflite_runtime pycoral~=2.0
+RUN pip3 install numpy opencv-python pillow
 
 # 设置入口点
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/bin/bash"] 
+CMD ["/bin/bash"]
