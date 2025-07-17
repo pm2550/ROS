@@ -9,17 +9,19 @@ services:
     network_mode: host
 
     devices:
-      - /dev/apex_0
-      - /dev/apex_1              # 只插一块 TPU 就留一个
+      - /dev/bus/usb:/dev/bus/usb          # 映射整个USB总线以支持EdgeTPU
+      # - /dev/apex_0:/dev/apex_0          # 如果设备节点存在，取消注释
+      # - /dev/apex_1:/dev/apex_1          # 多个TPU设备时使用
     group_add:
-      - plugdev                  # 让非 root 用户也能访问 TPU
+      - plugdev                            # 让非 root 用户也能访问 TPU
 
     volumes:
       - .:/ros2_ws/src/workspace:rw
       - /tmp/.X11-unix:/tmp/.X11-unix:rw  # 如需 GUI
       # 挂载宿主机MAX版本EdgeTPU库文件
-      - /lib/aarch64-linux-gnu/libedgetpu.so.1:/lib/aarch64-linux-gnu/libedgetpu.so.1:ro
-      - /lib/aarch64-linux-gnu/libedgetpu.so:/lib/aarch64-linux-gnu/libedgetpu.so:ro
+      - /usr/lib/aarch64-linux-gnu/libedgetpu.so.1.0:/usr/lib/aarch64-linux-gnu/libedgetpu.so.1.0:ro
+      - /usr/lib/aarch64-linux-gnu/libedgetpu.so.1:/usr/lib/aarch64-linux-gnu/libedgetpu.so.1:ro
+      - /usr/lib/aarch64-linux-gnu/libedgetpu.so:/usr/lib/aarch64-linux-gnu/libedgetpu.so:ro
 
     privileged: false            # 只挂 /dev/apex_* 已够；不想给全设备可设 true
     tty: true
