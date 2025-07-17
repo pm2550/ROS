@@ -10,18 +10,23 @@ services:
 
     devices:
       - /dev/bus/usb:/dev/bus/usb          # 映射整个USB总线以支持EdgeTPU
-      # - /dev/apex_0:/dev/apex_0          # 如果设备节点存在，取消注释
+      # - /dev/apex_0:/dev/apex_0          # EdgeTPU设备节点（如果存在）
       # - /dev/apex_1:/dev/apex_1          # 多个TPU设备时使用
     group_add:
       - plugdev                            # 让非 root 用户也能访问 TPU
 
     volumes:
-      - .:/ros2_ws/src/workspace:rw
+      - .:/ros2_ws:rw                      # 映射ROS根目录
       - /tmp/.X11-unix:/tmp/.X11-unix:rw  # 如需 GUI
-      # 挂载宿主机MAX版本EdgeTPU库文件
+      # 挂载宿主机EdgeTPU MAX版本库文件
       - /usr/lib/aarch64-linux-gnu/libedgetpu.so.1.0:/usr/lib/aarch64-linux-gnu/libedgetpu.so.1.0:ro
       - /usr/lib/aarch64-linux-gnu/libedgetpu.so.1:/usr/lib/aarch64-linux-gnu/libedgetpu.so.1:ro
       - /usr/lib/aarch64-linux-gnu/libedgetpu.so:/usr/lib/aarch64-linux-gnu/libedgetpu.so:ro
+      # 挂载宿主机pycoral包到容器的Python3.8路径
+      - /usr/local/lib/python3.11/dist-packages/pycoral:/usr/local/lib/python3.8/dist-packages/pycoral:ro
+      - /usr/local/lib/python3.11/dist-packages/pycoral-2.0.0.dist-info:/usr/local/lib/python3.8/dist-packages/pycoral-2.0.0.dist-info:ro
+      # 挂载udev规则文件
+      - /usr/lib/udev/rules.d/60-libedgetpu1-max.rules:/usr/lib/udev/rules.d/60-libedgetpu1-max.rules:ro
 
     privileged: false            # 只挂 /dev/apex_* 已够；不想给全设备可设 true
     tty: true

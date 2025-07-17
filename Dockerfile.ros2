@@ -15,19 +15,20 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     udev \
-    python3-dev \
+    libhdf5-dev \
+    pkg-config \
     build-essential \
-    cmake \
-    libopencv-dev \
-    python3-opencv \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# 添加Coral EdgeTPU仓库和安装EdgeTPU runtime
-RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list
-RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+# 安装EdgeTPU依赖（EdgeTPU库将从主机挂载）
 RUN apt-get update && apt-get install -y \
-    libedgetpu1-max \
-    libedgetpu-dev \
+    libusb-1.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装Python依赖
@@ -35,56 +36,38 @@ RUN pip3 install --upgrade pip
 
 # 安装基础科学计算库
 RUN pip3 install \
+    opencv-python \
     numpy \
     scipy \
-    matplotlib \
     pillow \
-    opencv-python \
     pandas \
-    scikit-learn
+    matplotlib
 
-# 安装深度学习框架
+# 安装兼容的EdgeTPU runtime和PyCoral
+RUN pip3 install https://github.com/google-coral/pycoral/releases/download/v2.0.0/tflite_runtime-2.5.0.post1-cp38-cp38-linux_aarch64.whl
+RUN pip3 install --user --extra-index-url https://google-coral.github.io/py-repo/ pycoral==2.0.0
+
+# 安装机器学习框架
 RUN pip3 install \
+    tensorflow==2.13.0 \
     torch \
     torchvision \
-    torchaudio \
-    tflite-runtime \
     ultralytics
 
-# 安装EdgeTPU支持
-RUN pip3 install --extra-index-url https://google-coral.github.io/py-repo/ pycoral
+# 注意：pycoral将从主机挂载，无需在容器中安装
+# RUN pip3 install --extra-index-url https://google-coral.github.io/py-repo/ pycoral
 
-# 安装机器人学相关库
+# 安装其他常用库
 RUN pip3 install \
     transforms3d \
     casadi \
     numba \
-    pyquaternion \
-    open3d
-
-# 安装F1TENTH仿真环境
-RUN pip3 install \
-    f110_gym \
-    gymnasium \
-    pyglet
-
-# 安装ROS2相关Python包
-RUN pip3 install \
-    rclpy \
-    cv_bridge \
-    python-json-logger \
-    psutil
-
-# 安装开发工具
-RUN pip3 install \
     jupyter \
-    ipython \
     pytest \
-    black \
-    flake8
+    black
 
 # 初始化rosdep
-RUN rosdep init && rosdep update
+RUN rm -rf /etc/ros/rosdep/sources.list.d/ && rosdep init && rosdep update
 
 # 创建工作空间
 WORKDIR /ros2_ws
